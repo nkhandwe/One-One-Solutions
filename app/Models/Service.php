@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class Service extends Model
 {
@@ -13,7 +14,6 @@ class Service extends Model
     protected $fillable = [
         'name',
         'slug',
-        'short_description',
         'description',
         'icon',
         'image',
@@ -31,6 +31,26 @@ class Service extends Model
         'updated_at',
         'deleted_at',
     ];
+
+    /**
+     * Boot method to automatically generate slug from name
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($service) {
+            if (empty($service->slug)) {
+                $service->slug = Str::slug($service->name);
+            }
+        });
+
+        static::updating(function ($service) {
+            if ($service->isDirty('name') && empty($service->slug)) {
+                $service->slug = Str::slug($service->name);
+            }
+        });
+    }
 
     public function scopeActive($query)
     {
