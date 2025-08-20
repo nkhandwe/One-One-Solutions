@@ -35,6 +35,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Content Management
     Route::resource('banners', BannerController::class);
+    Route::patch('banners/{banner}/toggle-active', [BannerController::class, 'toggleActive'])->name('banners.toggle-active');
+    Route::patch('banners/update-positions', [BannerController::class, 'updatePositions'])->name('banners.update-positions');
     Route::resource('testimonials', TestimonialController::class);
     Route::resource('portfolios', PortfolioController::class);
 
@@ -57,6 +59,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Enquiries
     Route::resource('enquiries', EnquiryController::class);
+    Route::get('enquiries/export', [EnquiryController::class, 'export'])->name('enquiries.export');
+    Route::patch('enquiries/{enquiry}/toggle-read', [EnquiryController::class, 'toggleRead'])->name('enquiries.toggle-read');
+    Route::get('enquiries/analytics', [EnquiryController::class, 'analytics'])->name('enquiries.analytics');
 
     // User Management
     Route::resource('users', UserController::class);

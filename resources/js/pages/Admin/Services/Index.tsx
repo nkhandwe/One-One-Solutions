@@ -1,38 +1,17 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTheme } from '@/contexts/ThemeContext';
 import AdminLayout from '@/layouts/AdminLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import {
-    ArrowDown,
-    ArrowUp,
-    Calendar,
-    CheckCircle,
-    Clock,
-    Edit,
-    Eye,
-    Filter,
-    Hash,
-    Image,
-    Plus,
-    Search,
-    Settings,
-    ToggleLeft,
-    ToggleRight,
-    Trash2,
-    TrendingUp,
-    X,
-} from 'lucide-react';
+import { ArrowLeft, ArrowUpDown, CheckCircle, Clock, Edit, Eye, Plus, Search, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 
 interface Service {
     id: number;
     name: string;
-    slug: string;
-    short_description: string;
     description: string;
     icon: string;
     image: string;
@@ -43,201 +22,239 @@ interface Service {
 }
 
 interface Props {
-    services: {
-        data: Service[];
-        current_page: number;
-        last_page: number;
-        per_page: number;
-        total: number;
-    };
-    stats: {
-        total: number;
-        active: number;
-        inactive: number;
-        this_month: number;
-    };
-    filters: {
-        search?: string;
-        status?: string;
-        sort_by?: string;
-        sort_order?: string;
-    };
+    services: Service[] | { data: Service[]; [key: string]: any };
+    categories?: any[];
 }
 
-export default function ServiceIndex({ services, stats, filters }: Props) {
-    const { colors, isDark } = useTheme();
-    const [search, setSearch] = useState(filters.search || '');
-    const [status, setStatus] = useState(filters.status || 'all');
-    const [sortBy, setSortBy] = useState(filters.sort_by || 'position');
-    const [sortOrder, setSortOrder] = useState(filters.sort_order || 'asc');
+export default function ServicesIndex({ services, categories }: Props) {
+    const { colors } = useTheme();
+    const [searchTerm, setSearchTerm] = useState('');
+    const [status, setStatus] = useState('all');
+    const [sortBy, setSortBy] = useState('position');
 
-    const handleSearch = () => {
-        router.get(
-            '/services',
-            {
-                search,
-                status,
-                sort_by: sortBy,
-                sort_order: sortOrder,
-            },
-            { preserveState: true },
-        );
-    };
+    // Handle both array and paginated object
+    const servicesArray = Array.isArray(services) ? services : services?.data || [];
+    const totalServicesCount = servicesArray.length;
+    const activeServicesCount = servicesArray.filter((s) => s.is_active).length;
+    const inactiveServicesCount = servicesArray.filter((s) => !s.is_active).length;
 
-    const handleFilter = () => {
-        router.get(
-            '/services',
-            {
-                search,
-                status,
-                sort_by: sortBy,
-                sort_order: sortOrder,
-            },
-            { preserveState: true },
-        );
-    };
+    // Filter and sort services
+    const filteredServices = servicesArray
+        .filter((service) => {
+            const matchesSearch =
+                service.name.toLowerCase().includes(searchTerm.toLowerCase()) || service.description.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesStatus = status === 'all' || (status === 'active' && service.is_active) || (status === 'inactive' && !service.is_active);
+            return matchesSearch && matchesStatus;
+        })
+        .sort((a, b) => {
+            if (sortBy === 'name') return a.name.localeCompare(b.name);
+            if (sortBy === 'created_at') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+            return a.position - b.position;
+        });
 
-    const toggleActive = (serviceId: number) => {
+    const handleToggleActive = (serviceId: number) => {
         router.patch(`/services/${serviceId}/toggle-active`);
     };
 
-    const deleteService = (serviceId: number) => {
+    const handleDelete = (serviceId: number) => {
         if (confirm('Are you sure you want to delete this service?')) {
             router.delete(`/services/${serviceId}`);
         }
     };
 
-    const movePosition = (serviceId: number, direction: 'up' | 'down') => {
-        const currentService = services.data.find((s) => s.id === serviceId);
-        if (!currentService) return;
-
-        const newPosition = direction === 'up' ? currentService.position - 1 : currentService.position + 1;
-
+    const handlePositionChange = (serviceId: number, direction: 'up' | 'down') => {
         router.patch('/services/update-positions', {
-            positions: [{ id: serviceId, position: newPosition }],
+            service_id: serviceId,
+            direction: direction,
         });
+    };
+
+    const clearFilters = () => {
+        setSearchTerm('');
+        setStatus('all');
+        setSortBy('position');
     };
 
     return (
         <AdminLayout>
-            <Head title="Manage Services" />
+            <Head title="Services Management" />
 
             <div className="p-6">
                 <div className="mx-auto max-w-7xl space-y-6">
                     {/* Header */}
-                    <div className="flex items-center justify-between">
-                        <div>
+                    <div className="flex items-center gap-4">
+                        <Link
+                            href="/dashboard"
+                            className="group flex items-center justify-center rounded-full border p-3 transition-all duration-300 hover:scale-105"
+                            style={{
+                                background: `${colors.background.card}60`,
+                                borderColor: colors.background.border,
+                            }}
+                        >
+                            <ArrowLeft className="h-5 w-5 transition-colors" style={{ color: colors.text.secondary }} />
+                        </Link>
+                        <div className="flex-1">
                             <h1 className="text-3xl font-bold" style={{ color: colors.text.primary }}>
-                                Service Management
+                                Services Management
                             </h1>
-                            <p style={{ color: colors.text.tertiary }}>Create, edit, and manage your services</p>
+                            <p style={{ color: colors.text.tertiary }}>Manage your service offerings and their display order</p>
                         </div>
-                        <Link href="/services/create">
-                            <Button
-                                className="border-0 bg-gradient-to-r"
+                        <div className="flex items-center gap-3">
+                            <Link
+                                href="/services/create"
+                                className="shadow-lg transition-all duration-300 hover:scale-105"
                                 style={{
-                                    background: `linear-gradient(135deg, ${colors.primary.main} 0%, ${colors.primary.light} 100%)`,
+                                    background: `linear-gradient(135deg, ${colors.primary.main} 0%, ${colors.secondary.main} 100%)`,
+                                    boxShadow: `0 10px 25px -5px ${colors.primary.main}25`,
                                 }}
                             >
-                                <Plus className="mr-2 h-4 w-4" />
-                                Create Service
-                            </Button>
-                        </Link>
+                                <Button className="bg-transparent text-white hover:bg-white/10">
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Add Service
+                                </Button>
+                            </Link>
+                        </div>
                     </div>
 
                     {/* Stats Cards */}
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+                        {/* Total Services */}
                         <Card
-                            className="border-0 shadow-lg backdrop-blur-sm"
+                            className="group relative overflow-hidden transition-all duration-300 hover:scale-105"
                             style={{
-                                background: colors.background.card,
-                                border: `1px solid ${colors.background.border}`,
+                                background: `linear-gradient(135deg, ${colors.background.card}90 0%, ${colors.background.card}70 100%)`,
+                                borderColor: colors.background.border,
+                                boxShadow: `0 25px 50px -12px ${colors.primary.main}25`,
                             }}
                         >
-                            <CardContent className="p-6">
+                            <div
+                                className="absolute -top-4 -right-4 h-24 w-24 rounded-full opacity-10 transition-all duration-300 group-hover:scale-110"
+                                style={{ background: `linear-gradient(135deg, ${colors.primary.main} 0%, ${colors.secondary.main} 100%)` }}
+                            />
+                            <CardContent className="relative p-6">
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="text-sm font-medium" style={{ color: colors.text.tertiary }}>
                                             Total Services
                                         </p>
                                         <p className="text-3xl font-bold" style={{ color: colors.text.primary }}>
-                                            {stats.total}
+                                            {totalServicesCount}
                                         </p>
                                     </div>
-                                    <div className="rounded-lg p-3" style={{ background: colors.primary.light }}>
-                                        <Settings className="h-6 w-6" style={{ color: colors.primary.main }} />
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card
-                            className="border-0 shadow-lg backdrop-blur-sm"
-                            style={{
-                                background: colors.background.card,
-                                border: `1px solid ${colors.background.border}`,
-                            }}
-                        >
-                            <CardContent className="p-6">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm font-medium" style={{ color: colors.text.tertiary }}>
-                                            Active
-                                        </p>
-                                        <p className="text-3xl font-bold" style={{ color: colors.text.primary }}>
-                                            {stats.active}
-                                        </p>
-                                    </div>
-                                    <div className="rounded-lg p-3" style={{ background: colors.success.bg }}>
-                                        <CheckCircle className="h-6 w-6" style={{ color: colors.success.main }} />
+                                    <div
+                                        className="flex h-12 w-12 items-center justify-center rounded-full"
+                                        style={{
+                                            background: `linear-gradient(135deg, ${colors.primary.main} 0%, ${colors.secondary.main} 100%)`,
+                                        }}
+                                    >
+                                        <CheckCircle className="h-6 w-6 text-white" />
                                     </div>
                                 </div>
                             </CardContent>
                         </Card>
 
+                        {/* Active Services */}
                         <Card
-                            className="border-0 shadow-lg backdrop-blur-sm"
+                            className="group relative overflow-hidden transition-all duration-300 hover:scale-105"
                             style={{
-                                background: colors.background.card,
-                                border: `1px solid ${colors.background.border}`,
+                                background: `linear-gradient(135deg, ${colors.background.card}90 0%, ${colors.background.card}70 100%)`,
+                                borderColor: colors.background.border,
+                                boxShadow: `0 25px 50px -12px ${colors.success.main}25`,
                             }}
                         >
-                            <CardContent className="p-6">
+                            <div
+                                className="absolute -top-4 -right-4 h-24 w-24 rounded-full opacity-10 transition-all duration-300 group-hover:scale-110"
+                                style={{ background: `linear-gradient(135deg, ${colors.success.main} 0%, ${colors.accent.main} 100%)` }}
+                            />
+                            <CardContent className="relative p-6">
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="text-sm font-medium" style={{ color: colors.text.tertiary }}>
-                                            Inactive
+                                            Active Services
                                         </p>
                                         <p className="text-3xl font-bold" style={{ color: colors.text.primary }}>
-                                            {stats.inactive}
+                                            {activeServicesCount}
                                         </p>
                                     </div>
-                                    <div className="rounded-lg p-3" style={{ background: colors.warning.bg }}>
-                                        <Clock className="h-6 w-6" style={{ color: colors.warning.main }} />
+                                    <div
+                                        className="flex h-12 w-12 items-center justify-center rounded-full"
+                                        style={{
+                                            background: `linear-gradient(135deg, ${colors.success.main} 0%, ${colors.accent.main} 100%)`,
+                                        }}
+                                    >
+                                        <CheckCircle className="h-6 w-6 text-white" />
                                     </div>
                                 </div>
                             </CardContent>
                         </Card>
 
+                        {/* Inactive Services */}
                         <Card
-                            className="border-0 shadow-lg backdrop-blur-sm"
+                            className="group relative overflow-hidden transition-all duration-300 hover:scale-105"
                             style={{
-                                background: colors.background.card,
-                                border: `1px solid ${colors.background.border}`,
+                                background: `linear-gradient(135deg, ${colors.background.card}90 0%, ${colors.background.card}70 100%)`,
+                                borderColor: colors.background.border,
+                                boxShadow: `0 25px 50px -12px ${colors.warning.main}25`,
                             }}
                         >
-                            <CardContent className="p-6">
+                            <div
+                                className="absolute -top-4 -right-4 h-24 w-24 rounded-full opacity-10 transition-all duration-300 group-hover:scale-110"
+                                style={{ background: `linear-gradient(135deg, ${colors.warning.main} 0%, ${colors.accent.main} 100%)` }}
+                            />
+                            <CardContent className="relative p-6">
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="text-sm font-medium" style={{ color: colors.text.tertiary }}>
-                                            This Month
+                                            Inactive Services
                                         </p>
                                         <p className="text-3xl font-bold" style={{ color: colors.text.primary }}>
-                                            {stats.this_month}
+                                            {inactiveServicesCount}
                                         </p>
                                     </div>
-                                    <div className="rounded-lg p-3" style={{ background: colors.accent.light }}>
-                                        <TrendingUp className="h-6 w-6" style={{ color: colors.accent.main }} />
+                                    <div
+                                        className="flex h-12 w-12 items-center justify-center rounded-full"
+                                        style={{
+                                            background: `linear-gradient(135deg, ${colors.warning.main} 0%, ${colors.accent.main} 100%)`,
+                                        }}
+                                    >
+                                        <Clock className="h-6 w-6 text-white" />
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Average Position */}
+                        <Card
+                            className="group relative overflow-hidden transition-all duration-300 hover:scale-105"
+                            style={{
+                                background: `linear-gradient(135deg, ${colors.background.card}90 0%, ${colors.background.card}70 100%)`,
+                                borderColor: colors.background.border,
+                                boxShadow: `0 25px 50px -12px ${colors.secondary.main}25`,
+                            }}
+                        >
+                            <div
+                                className="absolute -top-4 -right-4 h-24 w-24 rounded-full opacity-10 transition-all duration-300 group-hover:scale-110"
+                                style={{ background: `linear-gradient(135deg, ${colors.secondary.main} 0%, ${colors.accent.main} 100%)` }}
+                            />
+                            <CardContent className="relative p-6">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-medium" style={{ color: colors.text.tertiary }}>
+                                            Avg Position
+                                        </p>
+                                        <p className="text-3xl font-bold" style={{ color: colors.text.primary }}>
+                                            {totalServicesCount > 0
+                                                ? Math.round(servicesArray.reduce((sum, s) => sum + s.position, 0) / totalServicesCount)
+                                                : 0}
+                                        </p>
+                                    </div>
+                                    <div
+                                        className="flex h-12 w-12 items-center justify-center rounded-full"
+                                        style={{
+                                            background: `linear-gradient(135deg, ${colors.secondary.main} 0%, ${colors.accent.main} 100%)`,
+                                        }}
+                                    >
+                                        <ArrowUpDown className="h-6 w-6 text-white" />
                                     </div>
                                 </div>
                             </CardContent>
@@ -246,296 +263,272 @@ export default function ServiceIndex({ services, stats, filters }: Props) {
 
                     {/* Filters and Search */}
                     <Card
-                        className="border-0 shadow-lg backdrop-blur-sm"
                         style={{
-                            background: colors.background.card,
-                            border: `1px solid ${colors.background.border}`,
+                            background: `${colors.background.card}90`,
+                            borderColor: colors.background.border,
+                            boxShadow: `0 25px 50px -12px ${colors.primary.main}25`,
                         }}
                     >
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2" style={{ color: colors.text.primary }}>
-                                <Filter className="h-5 w-5" style={{ color: colors.primary.main }} />
-                                Filters & Search
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-                                <div className="relative">
-                                    <Search
-                                        className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform"
-                                        style={{ color: colors.text.muted }}
-                                    />
-                                    <Input
-                                        placeholder="Search services..."
-                                        value={search}
-                                        onChange={(e) => setSearch(e.target.value)}
-                                        onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                                        className="pl-10 backdrop-blur-sm"
-                                        style={{
-                                            borderColor: colors.background.border,
-                                            background: colors.background.input,
-                                        }}
-                                    />
+                        <CardContent className="p-6">
+                            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                                <div className="flex flex-1 items-center gap-4">
+                                    <div className="relative max-w-md flex-1">
+                                        <Search
+                                            className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2"
+                                            style={{ color: colors.text.tertiary }}
+                                        />
+                                        <Input
+                                            placeholder="Search services..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            className="pl-10 transition-all duration-200 focus:ring-2 focus:ring-offset-0"
+                                            style={{
+                                                borderColor: colors.background.border,
+                                                background: colors.background.input,
+                                                color: colors.text.primary,
+                                                '--tw-ring-color': colors.primary.main,
+                                            }}
+                                        />
+                                    </div>
                                 </div>
 
-                                <Select value={status} onValueChange={setStatus}>
-                                    <SelectTrigger
-                                        className="backdrop-blur-sm"
-                                        style={{
-                                            borderColor: colors.background.border,
-                                            background: colors.background.input,
-                                        }}
-                                    >
-                                        <SelectValue placeholder="All Status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">All Status</SelectItem>
-                                        <SelectItem value="active">Active</SelectItem>
-                                        <SelectItem value="inactive">Inactive</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm font-medium" style={{ color: colors.text.secondary }}>
+                                            Status:
+                                        </span>
+                                        <Select value={status} onValueChange={setStatus}>
+                                            <SelectTrigger
+                                                className="w-32 transition-all duration-200 focus:ring-2 focus:ring-offset-0"
+                                                style={{
+                                                    borderColor: colors.background.border,
+                                                    background: colors.background.input,
+                                                    color: colors.text.primary,
+                                                    '--tw-ring-color': colors.primary.main,
+                                                }}
+                                            >
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="all">All Status</SelectItem>
+                                                <SelectItem value="active">Active</SelectItem>
+                                                <SelectItem value="inactive">Inactive</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
 
-                                <Select value={sortBy} onValueChange={setSortBy}>
-                                    <SelectTrigger
-                                        className="backdrop-blur-sm"
-                                        style={{
-                                            borderColor: colors.background.border,
-                                            background: colors.background.input,
-                                        }}
-                                    >
-                                        <SelectValue placeholder="Sort by" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="position">Position</SelectItem>
-                                        <SelectItem value="name">Name</SelectItem>
-                                        <SelectItem value="created_at">Created Date</SelectItem>
-                                        <SelectItem value="updated_at">Updated Date</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm font-medium" style={{ color: colors.text.secondary }}>
+                                            Sort by:
+                                        </span>
+                                        <Select value={sortBy} onValueChange={setSortBy}>
+                                            <SelectTrigger
+                                                className="w-32 transition-all duration-200 focus:ring-2 focus:ring-offset-0"
+                                                style={{
+                                                    borderColor: colors.background.border,
+                                                    background: colors.background.input,
+                                                    color: colors.text.primary,
+                                                    '--tw-ring-color': colors.primary.main,
+                                                }}
+                                            >
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="position">Position</SelectItem>
+                                                <SelectItem value="name">Name</SelectItem>
+                                                <SelectItem value="created_at">Date Created</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
 
-                                <div className="flex gap-2">
-                                    <Button
-                                        onClick={handleFilter}
-                                        className="border-0 bg-gradient-to-r"
-                                        style={{
-                                            background: `linear-gradient(135deg, ${colors.secondary.main} 0%, ${colors.secondary.light} 100%)`,
-                                        }}
-                                    >
-                                        <Filter className="mr-2 h-4 w-4" />
-                                        Apply Filters
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => {
-                                            setSearch('');
-                                            setStatus('all');
-                                            setSortBy('position');
-                                            setSortOrder('asc');
-                                            router.get('/services');
-                                        }}
-                                        style={{
-                                            borderColor: colors.background.border,
-                                            color: colors.text.secondary,
-                                        }}
-                                    >
-                                        Clear
-                                    </Button>
+                                    {(searchTerm || status !== 'all' || sortBy !== 'position') && (
+                                        <Button
+                                            onClick={clearFilters}
+                                            variant="outline"
+                                            size="sm"
+                                            className="transition-all duration-200 hover:scale-105"
+                                            style={{
+                                                borderColor: colors.background.border,
+                                                color: colors.text.secondary,
+                                            }}
+                                        >
+                                            <X className="mr-2 h-4 w-4" />
+                                            Clear
+                                        </Button>
+                                    )}
                                 </div>
+                            </div>
+
+                            <div className="mt-4 flex items-center justify-between">
+                                <p className="text-sm" style={{ color: colors.text.tertiary }}>
+                                    Showing {filteredServices.length} of {totalServicesCount} services
+                                </p>
                             </div>
                         </CardContent>
                     </Card>
 
                     {/* Services Table */}
                     <Card
-                        className="border-0 shadow-lg backdrop-blur-sm"
                         style={{
-                            background: colors.background.card,
-                            border: `1px solid ${colors.background.border}`,
+                            background: `${colors.background.card}90`,
+                            borderColor: colors.background.border,
+                            boxShadow: `0 25px 50px -12px ${colors.primary.main}25`,
                         }}
                     >
-                        <CardHeader>
-                            <CardTitle style={{ color: colors.text.primary }}>Services</CardTitle>
-                        </CardHeader>
-                        <CardContent>
+                        <CardContent className="p-0">
                             <div className="overflow-x-auto">
                                 <table className="w-full">
                                     <thead>
-                                        <tr style={{ borderBottom: `1px solid ${colors.background.divider}` }}>
-                                            <th className="p-4 text-left font-medium" style={{ color: colors.text.tertiary }}>
+                                        <tr style={{ borderBottomColor: colors.background.divider }}>
+                                            <th className="px-6 py-4 text-left text-sm font-medium" style={{ color: colors.text.secondary }}>
                                                 Position
                                             </th>
-                                            <th className="p-4 text-left font-medium" style={{ color: colors.text.tertiary }}>
+                                            <th className="px-6 py-4 text-left text-sm font-medium" style={{ color: colors.text.secondary }}>
                                                 Service
                                             </th>
-                                            <th className="p-4 text-left font-medium" style={{ color: colors.text.tertiary }}>
+                                            <th className="px-6 py-4 text-left text-sm font-medium" style={{ color: colors.text.secondary }}>
                                                 Status
                                             </th>
-                                            <th className="p-4 text-left font-medium" style={{ color: colors.text.tertiary }}>
-                                                Icon
-                                            </th>
-                                            <th className="p-4 text-left font-medium" style={{ color: colors.text.tertiary }}>
+                                            <th className="px-6 py-4 text-left text-sm font-medium" style={{ color: colors.text.secondary }}>
                                                 Created
                                             </th>
-                                            <th className="p-4 text-left font-medium" style={{ color: colors.text.tertiary }}>
+                                            <th className="px-6 py-4 text-left text-sm font-medium" style={{ color: colors.text.secondary }}>
                                                 Actions
                                             </th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {services.data.map((service, index) => (
+                                        {filteredServices.map((service, index) => (
                                             <tr
                                                 key={service.id}
-                                                className="hover:bg-background-100 border-b transition-colors"
+                                                className="group hover:bg-opacity-50 transition-all duration-200"
                                                 style={{
-                                                    borderBottom: `1px solid ${colors.background.divider}`,
+                                                    borderBottomColor: colors.background.divider,
+                                                    background: index % 2 === 0 ? `${colors.background.card}30` : 'transparent',
                                                 }}
                                             >
-                                                <td className="p-4">
+                                                <td className="px-6 py-4">
                                                     <div className="flex items-center gap-2">
-                                                        <div className="flex items-center gap-1">
-                                                            <Hash className="h-4 w-4" style={{ color: colors.text.muted }} />
-                                                            <span className="font-mono text-sm font-medium" style={{ color: colors.text.secondary }}>
-                                                                {service.position}
-                                                            </span>
-                                                        </div>
+                                                        <span className="font-mono text-sm font-bold" style={{ color: colors.text.primary }}>
+                                                            {service.position}
+                                                        </span>
                                                         <div className="flex flex-col gap-1">
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                onClick={() => movePosition(service.id, 'up')}
-                                                                disabled={index === 0}
-                                                                className="h-6 w-6 p-0 hover:bg-blue-50"
+                                                            <button
+                                                                onClick={() => handlePositionChange(service.id, 'up')}
+                                                                disabled={service.position === 1}
+                                                                className="flex h-6 w-6 items-center justify-center rounded transition-colors disabled:opacity-30"
+                                                                style={{
+                                                                    background: colors.background.tertiary,
+                                                                    color: colors.text.secondary,
+                                                                }}
                                                             >
-                                                                <ArrowUp className="h-3 w-3" />
-                                                            </Button>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                onClick={() => movePosition(service.id, 'down')}
-                                                                disabled={index === services.data.length - 1}
-                                                                className="h-6 w-6 p-0 hover:bg-blue-50"
+                                                                <ArrowUpDown className="h-3 w-3 rotate-180" />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handlePositionChange(service.id, 'down')}
+                                                                disabled={service.position === totalServicesCount}
+                                                                className="flex h-6 w-6 items-center justify-center rounded transition-colors disabled:opacity-30"
+                                                                style={{
+                                                                    background: colors.background.tertiary,
+                                                                    color: colors.text.secondary,
+                                                                }}
                                                             >
-                                                                <ArrowDown className="h-3 w-3" />
-                                                            </Button>
+                                                                <ArrowUpDown className="h-3 w-3 w-4" />
+                                                            </button>
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="p-4">
-                                                    <div className="space-y-1">
-                                                        <p className="font-medium" style={{ color: colors.text.primary }}>
-                                                            {service.name}
-                                                        </p>
-                                                        <p className="line-clamp-2 text-sm" style={{ color: colors.text.secondary }}>
-                                                            {service.short_description}
-                                                        </p>
-                                                        <p className="text-xs" style={{ color: colors.text.muted }}>
-                                                            /{service.slug}
-                                                        </p>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-3">
+                                                        {service.image ? (
+                                                            <img
+                                                                src={service.image}
+                                                                alt={service.name}
+                                                                className="h-12 w-12 rounded-lg object-cover"
+                                                            />
+                                                        ) : (
+                                                            <div
+                                                                className="flex h-12 w-12 items-center justify-center rounded-lg text-2xl font-bold text-white"
+                                                                style={{
+                                                                    background: `linear-gradient(135deg, ${colors.primary.main} 0%, ${colors.secondary.main} 100%)`,
+                                                                }}
+                                                            >
+                                                                {service.icon || service.name.charAt(0)}
+                                                            </div>
+                                                        )}
+                                                        <div>
+                                                            <h3 className="font-semibold" style={{ color: colors.text.primary }}>
+                                                                {service.name}
+                                                            </h3>
+                                                            <p className="line-clamp-2 text-sm" style={{ color: colors.text.tertiary }}>
+                                                                {service.description}
+                                                            </p>
+                                                        </div>
                                                     </div>
                                                 </td>
-                                                <td className="p-4">
+                                                <td className="px-6 py-4">
                                                     <Badge
-                                                        variant={service.is_active ? 'default' : 'secondary'}
-                                                        className={service.is_active ? 'bg-success-main text-white' : 'bg-warning-main text-white'}
+                                                        variant="outline"
+                                                        className="transition-all duration-300"
+                                                        style={{
+                                                            borderColor: service.is_active ? colors.success.main : colors.warning.main,
+                                                            background: service.is_active ? `${colors.success.main}15` : `${colors.warning.main}15`,
+                                                            color: service.is_active ? colors.success.main : colors.warning.main,
+                                                        }}
                                                     >
                                                         {service.is_active ? 'Active' : 'Inactive'}
                                                     </Badge>
                                                 </td>
-                                                <td className="p-4">
-                                                    <div className="flex items-center gap-2">
-                                                        {service.icon ? (
-                                                            <div
-                                                                className="flex h-8 w-8 items-center justify-center rounded-lg"
-                                                                style={{ background: colors.background.tertiary }}
-                                                            >
-                                                                <span className="text-sm">{service.icon}</span>
-                                                            </div>
-                                                        ) : service.image ? (
-                                                            <div
-                                                                className="flex h-8 w-8 items-center justify-center rounded-lg"
-                                                                style={{ background: colors.background.tertiary }}
-                                                            >
-                                                                <Image className="h-4 w-4" style={{ color: colors.text.muted }} />
-                                                            </div>
-                                                        ) : (
-                                                            <div
-                                                                className="flex h-8 w-8 items-center justify-center rounded-lg"
-                                                                style={{ background: colors.background.tertiary }}
-                                                            >
-                                                                <X className="h-4 w-4" style={{ color: colors.text.muted }} />
-                                                            </div>
-                                                        )}
-                                                    </div>
+                                                <td className="px-6 py-4">
+                                                    <span className="text-sm" style={{ color: colors.text.tertiary }}>
+                                                        {new Date(service.created_at).toLocaleDateString()}
+                                                    </span>
                                                 </td>
-                                                <td className="p-4">
+                                                <td className="px-6 py-4">
                                                     <div className="flex items-center gap-2">
-                                                        <Calendar className="h-4 w-4" style={{ color: colors.text.muted }} />
-                                                        <span style={{ color: colors.text.tertiary }}>
-                                                            {new Date(service.created_at).toLocaleDateString()}
-                                                        </span>
-                                                    </div>
-                                                </td>
-                                                <td className="p-4">
-                                                    <div className="flex items-center gap-2">
-                                                        <Link href={`/services/${service.id}`}>
-                                                            <Button
-                                                                variant="outline"
-                                                                size="sm"
-                                                                style={{
-                                                                    borderColor: colors.background.border,
-                                                                    color: colors.text.secondary,
-                                                                }}
-                                                            >
-                                                                <Eye className="mr-1 h-3 w-3" />
-                                                                View
-                                                            </Button>
+                                                        <Link
+                                                            href={`/services/${service.id}`}
+                                                            className="flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200 hover:scale-110"
+                                                            style={{
+                                                                background: colors.background.tertiary,
+                                                                color: colors.text.secondary,
+                                                            }}
+                                                        >
+                                                            <Eye className="h-4 w-4" />
                                                         </Link>
-                                                        <Link href={`/services/${service.id}/edit`}>
-                                                            <Button
-                                                                variant="outline"
-                                                                size="sm"
-                                                                style={{
-                                                                    borderColor: colors.background.border,
-                                                                    color: colors.text.secondary,
-                                                                }}
-                                                            >
-                                                                <Edit className="mr-1 h-3 w-3" />
-                                                                Edit
-                                                            </Button>
+                                                        <Link
+                                                            href={`/services/${service.id}/edit`}
+                                                            className="flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200 hover:scale-110"
+                                                            style={{
+                                                                background: colors.background.tertiary,
+                                                                color: colors.text.secondary,
+                                                            }}
+                                                        >
+                                                            <Edit className="h-4 w-4" />
                                                         </Link>
                                                         <Button
-                                                            variant="outline"
+                                                            onClick={() => handleToggleActive(service.id)}
                                                             size="sm"
-                                                            onClick={() => toggleActive(service.id)}
-                                                            className="border-2 transition-all duration-300"
+                                                            variant="outline"
+                                                            className="h-8 w-8 p-0 transition-all duration-200 hover:scale-110"
                                                             style={{
                                                                 borderColor: service.is_active ? colors.warning.main : colors.success.main,
                                                                 color: service.is_active ? colors.warning.main : colors.success.main,
                                                             }}
                                                         >
-                                                            {service.is_active ? (
-                                                                <>
-                                                                    <ToggleLeft className="mr-1 h-3 w-3" />
-                                                                    Deactivate
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    <ToggleRight className="mr-1 h-3 w-3" />
-                                                                    Activate
-                                                                </>
-                                                            )}
+                                                            {service.is_active ? <Clock className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
                                                         </Button>
                                                         <Button
-                                                            variant="outline"
+                                                            onClick={() => handleDelete(service.id)}
                                                             size="sm"
-                                                            onClick={() => deleteService(service.id)}
+                                                            variant="outline"
+                                                            className="h-8 w-8 p-0 transition-all duration-200 hover:scale-110"
                                                             style={{
                                                                 borderColor: colors.error.main,
                                                                 color: colors.error.main,
                                                             }}
                                                         >
-                                                            <Trash2 className="mr-1 h-3 w-3" />
-                                                            Delete
+                                                            <Trash2 className="h-4 w-4" />
                                                         </Button>
                                                     </div>
                                                 </td>
@@ -545,32 +538,36 @@ export default function ServiceIndex({ services, stats, filters }: Props) {
                                 </table>
                             </div>
 
-                            {/* Pagination */}
-                            {services.last_page > 1 && (
-                                <div
-                                    className="mt-6 flex items-center justify-between border-t pt-6"
-                                    style={{ borderColor: colors.background.divider }}
-                                >
-                                    <p className="text-sm" style={{ color: colors.text.tertiary }}>
-                                        Showing {(services.current_page - 1) * services.per_page + 1} to{' '}
-                                        {Math.min(services.current_page * services.per_page, services.total)} of {services.total} results
-                                    </p>
-                                    <div className="flex items-center gap-2">
-                                        {Array.from({ length: services.last_page }, (_, i) => i + 1).map((page) => (
-                                            <Button
-                                                key={page}
-                                                variant={page === services.current_page ? 'default' : 'outline'}
-                                                size="sm"
-                                                className={
-                                                    page === services.current_page
-                                                        ? 'bg-primary-600 border-primary-600 text-white'
-                                                        : 'hover:border-primary-600 hover:text-primary-600 border-neutral-200 text-neutral-600'
-                                                }
-                                            >
-                                                {page}
-                                            </Button>
-                                        ))}
+                            {filteredServices.length === 0 && (
+                                <div className="py-12 text-center">
+                                    <div className="mx-auto mb-4 h-16 w-16 rounded-full" style={{ background: `${colors.background.tertiary}` }}>
+                                        <Search className="mx-auto h-8 w-8 py-4" style={{ color: colors.text.tertiary }} />
                                     </div>
+                                    <h3 className="mb-2 text-lg font-semibold" style={{ color: colors.text.primary }}>
+                                        {totalServicesCount === 0 ? 'No services yet' : 'No services found'}
+                                    </h3>
+                                    <p style={{ color: colors.text.tertiary }}>
+                                        {totalServicesCount === 0
+                                            ? 'Get started by creating your first service.'
+                                            : searchTerm || status !== 'all'
+                                              ? 'Try adjusting your search or filters.'
+                                              : 'Get started by creating your first service.'}
+                                    </p>
+                                    {totalServicesCount === 0 && (
+                                        <div className="mt-4">
+                                            <Link
+                                                href="/services/create"
+                                                className="inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium transition-all duration-200 hover:scale-105"
+                                                style={{
+                                                    background: `linear-gradient(135deg, ${colors.primary.main} 0%, ${colors.secondary.main} 100%)`,
+                                                    color: 'white',
+                                                }}
+                                            >
+                                                <Plus className="h-4 w-4" />
+                                                Create Your First Service
+                                            </Link>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </CardContent>
