@@ -45,7 +45,7 @@ export default function EditUser({ user }: Props) {
             <Head title={`Edit User - ${user.name}`} />
 
             <div className="p-6">
-                <div className="mx-auto max-w-4xl space-y-6">
+                <div className="mx-auto max-w-7xl space-y-6">
                     {/* Header */}
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
