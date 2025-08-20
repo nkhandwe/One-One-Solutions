@@ -15,6 +15,8 @@ class Blog extends Model
         'title',
         'slug',
         'excerpt',
+        'meta_description',
+        'meta_keywords',
         'content',
         'featured_image',
         'image',
@@ -23,13 +25,17 @@ class Blog extends Model
         'tags',
         'is_published',
         'published_at',
+        'views_count',
+        'reading_time',
     ];
 
     protected $casts = [
         'tags' => 'array',
+        'meta_keywords' => 'array',
         'is_published' => 'boolean',
         'published_at' => 'datetime',
-        'published_at' => 'datetime',
+        'views_count' => 'integer',
+        'reading_time' => 'integer',
     ];
 
     protected $dates = [
