@@ -63,4 +63,22 @@ class Blog extends Model
     {
         return $this->tags ? implode(', ', $this->tags) : 'No tags';
     }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(BlogCategory::class);
+    }
+
+    public function getCategoryNameAttribute()
+    {
+        return $this->category ? $this->category->name : 'Uncategorized';
+    }
+
+    public function getFeaturedImageUrlAttribute()
+    {
+        if ($this->featured_image) {
+            return asset('storage/' . $this->featured_image);
+        }
+        return $this->image ? asset($this->image) : null;
+    }
 }
