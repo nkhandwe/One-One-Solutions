@@ -23,9 +23,8 @@ export const ThemeToggle: React.FC = () => {
                 const isActive = theme === value;
 
                 return (
-                    <div className="flex items-center justify-center">
+                    <div key={value} className="flex items-center justify-center">
                         <button
-                            key={value}
                             onClick={() => setTheme(value)}
                             className={cn(
                                 'flex items-center rounded-md px-3.5 py-1.5 transition-all duration-200',
