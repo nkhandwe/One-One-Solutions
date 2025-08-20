@@ -3,9 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useTheme } from '@/contexts/ThemeContext';
 import AdminLayout from '@/layouts/AdminLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { Calendar, CheckCircle, Clock, Edit, Eye, EyeOff, FileText, Filter, Plus, Search, Trash2, TrendingUp, User } from 'lucide-react';
+import { ArrowLeft, Calendar, CheckCircle, Clock, Edit, Eye, EyeOff, FileText, Filter, Plus, Search, Trash2, TrendingUp, User } from 'lucide-react';
 import { useState } from 'react';
 
 interface Blog {
@@ -14,11 +15,19 @@ interface Blog {
     slug: string;
     excerpt: string;
     author: string;
+    category?: {
+        id: number;
+        name: string;
+        color: string;
+    };
+    featured_image: string | null;
     is_published: boolean;
     published_at: string | null;
     created_at: string;
     updated_at: string;
     tags: string[];
+    views_count: number;
+    reading_time: number | null;
 }
 
 interface Props {
@@ -44,6 +53,7 @@ interface Props {
 }
 
 export default function BlogIndex({ blogs, stats, filters }: Props) {
+    const { colors } = useTheme();
     const [search, setSearch] = useState(filters.search || '');
     const [status, setStatus] = useState(filters.status || 'all');
     const [sortBy, setSortBy] = useState(filters.sort_by || 'created_at');
@@ -92,13 +102,31 @@ export default function BlogIndex({ blogs, stats, filters }: Props) {
             <div className="p-6">
                 <div className="mx-auto max-w-7xl space-y-6">
                     {/* Header */}
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-3xl font-bold text-neutral-900">Blog Management</h1>
-                            <p className="text-neutral-600">Create, edit, and manage your blog posts</p>
+                    <div className="flex items-center gap-4">
+                        <Link
+                            href="/dashboard"
+                            className="group flex items-center justify-center rounded-full border p-3 transition-all duration-300 hover:scale-105"
+                            style={{
+                                background: `${colors.background.card}60`,
+                                borderColor: colors.background.border,
+                            }}
+                        >
+                            <ArrowLeft className="h-5 w-5 transition-colors" style={{ color: colors.text.secondary }} />
+                        </Link>
+                        <div className="flex-1">
+                            <h1 className="text-3xl font-bold" style={{ color: colors.text.primary }}>
+                                Blog Management
+                            </h1>
+                            <p style={{ color: colors.text.tertiary }}>Create, edit, and manage your blog posts with categories and media</p>
                         </div>
                         <Link href="/blogs/create">
-                            <Button className="from-primary-600 to-primary-light hover:from-primary-dark hover:to-primary-600 border-0 bg-gradient-to-r">
+                            <Button
+                                className="shadow-lg transition-all duration-300 hover:scale-105"
+                                style={{
+                                    background: `linear-gradient(135deg, ${colors.primary.main} 0%, ${colors.secondary.main} 100%)`,
+                                    boxShadow: `0 10px 25px -5px ${colors.primary.main}25`,
+                                }}
+                            >
                                 <Plus className="mr-2 h-4 w-4" />
                                 Create Blog Post
                             </Button>
@@ -107,86 +135,126 @@ export default function BlogIndex({ blogs, stats, filters }: Props) {
 
                     {/* Stats Cards */}
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
-                        <Card className="border-0 bg-white/70 shadow-lg backdrop-blur-sm">
-                            <CardContent className="p-6">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm font-medium text-neutral-600">Total Posts</p>
-                                        <p className="text-3xl font-bold text-neutral-900">{stats.total}</p>
-                                    </div>
-                                    <div className="rounded-lg bg-blue-50 p-3">
-                                        <FileText className="h-6 w-6 text-blue-600" />
-                                    </div>
+                        {[
+                            {
+                                label: 'Total Posts',
+                                value: stats.total,
+                                icon: FileText,
+                                color: colors.primary.main,
+                                bgGradient: `linear-gradient(135deg, ${colors.primary.main}05 0%, ${colors.primary.main}15 100%)`,
+                                description: 'All blog posts',
+                            },
+                            {
+                                label: 'Published',
+                                value: stats.published,
+                                icon: CheckCircle,
+                                color: colors.success.main,
+                                bgGradient: `linear-gradient(135deg, ${colors.success.main}05 0%, ${colors.success.main}15 100%)`,
+                                description: 'Live on website',
+                            },
+                            {
+                                label: 'Drafts',
+                                value: stats.drafts,
+                                icon: Clock,
+                                color: colors.warning.main,
+                                bgGradient: `linear-gradient(135deg, ${colors.warning.main}05 0%, ${colors.warning.main}15 100%)`,
+                                description: 'Work in progress',
+                            },
+                            {
+                                label: 'This Month',
+                                value: stats.this_month,
+                                icon: TrendingUp,
+                                color: colors.accent.main,
+                                bgGradient: `linear-gradient(135deg, ${colors.accent.main}05 0%, ${colors.accent.main}15 100%)`,
+                                description: 'Recent activity',
+                            },
+                        ].map((stat, index) => (
+                            <Card
+                                key={index}
+                                className="group cursor-pointer overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-xl"
+                                style={{
+                                    background: stat.bgGradient,
+                                    borderColor: `${stat.color}30`,
+                                    boxShadow: `0 10px 25px -5px ${stat.color}20`,
+                                }}
+                            >
+                                <div className="absolute top-0 right-0 h-32 w-32 opacity-10">
+                                    <div
+                                        className="h-full w-full rounded-full"
+                                        style={{ background: `linear-gradient(135deg, ${stat.color} 0%, ${colors.primary.main} 100%)` }}
+                                    ></div>
                                 </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="border-0 bg-white/70 shadow-lg backdrop-blur-sm">
-                            <CardContent className="p-6">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm font-medium text-neutral-600">Published</p>
-                                        <p className="text-3xl font-bold text-neutral-900">{stats.published}</p>
+                                <CardContent className="relative p-6">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="mb-2 text-sm font-medium" style={{ color: colors.text.secondary }}>
+                                                {stat.label}
+                                            </p>
+                                            <p className="mb-1 text-4xl font-bold" style={{ color: stat.color }}>
+                                                {stat.value}
+                                            </p>
+                                            <p className="text-xs" style={{ color: colors.text.tertiary }}>
+                                                {stat.description}
+                                            </p>
+                                        </div>
+                                        <div
+                                            className="rounded-2xl p-4 shadow-lg"
+                                            style={{
+                                                background: `linear-gradient(135deg, ${stat.color} 0%, ${colors.primary.main} 100%)`,
+                                                boxShadow: `0 8px 25px -5px ${stat.color}40`,
+                                            }}
+                                        >
+                                            <stat.icon className="h-8 w-8 text-white" />
+                                        </div>
                                     </div>
-                                    <div className="rounded-lg bg-green-50 p-3">
-                                        <CheckCircle className="h-6 w-6 text-green-600" />
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="border-0 bg-white/70 shadow-lg backdrop-blur-sm">
-                            <CardContent className="p-6">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm font-medium text-neutral-600">Drafts</p>
-                                        <p className="text-3xl font-bold text-neutral-900">{stats.drafts}</p>
-                                    </div>
-                                    <div className="rounded-lg bg-orange-50 p-3">
-                                        <Clock className="h-6 w-6 text-orange-600" />
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="border-0 bg-white/70 shadow-lg backdrop-blur-sm">
-                            <CardContent className="p-6">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm font-medium text-neutral-600">This Month</p>
-                                        <p className="text-3xl font-bold text-neutral-900">{stats.this_month}</p>
-                                    </div>
-                                    <div className="rounded-lg bg-purple-50 p-3">
-                                        <TrendingUp className="h-6 w-6 text-purple-600" />
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                                </CardContent>
+                            </Card>
+                        ))}
                     </div>
 
                     {/* Filters and Search */}
-                    <Card className="border-0 bg-white/70 shadow-lg backdrop-blur-sm">
+                    <Card
+                        style={{
+                            background: `${colors.background.card}90`,
+                            borderColor: colors.background.border,
+                            boxShadow: `0 25px 50px -12px ${colors.primary.main}25`,
+                        }}
+                    >
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-neutral-900">
-                                <Filter className="text-primary-600 h-5 w-5" />
+                            <CardTitle className="flex items-center gap-2" style={{ color: colors.text.primary }}>
+                                <Filter className="h-5 w-5" style={{ color: colors.primary.main }} />
                                 Filters & Search
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
                                 <div className="relative">
-                                    <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-neutral-500" />
+                                    <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform" style={{ color: colors.text.muted }} />
                                     <Input
                                         placeholder="Search blogs..."
                                         value={search}
                                         onChange={(e) => setSearch(e.target.value)}
                                         onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                                        className="focus:border-primary-600 border-neutral-200 bg-white/70 pl-10 backdrop-blur-sm"
+                                        className="pl-10 transition-all duration-200 focus:ring-2 focus:ring-offset-0"
+                                        style={{
+                                            borderColor: colors.background.border,
+                                            background: colors.background.input,
+                                            color: colors.text.primary,
+                                            '--tw-ring-color': colors.primary.main,
+                                        }}
                                     />
                                 </div>
 
                                 <Select value={status} onValueChange={setStatus}>
-                                    <SelectTrigger className="border-neutral-200 bg-white/70 backdrop-blur-sm">
+                                    <SelectTrigger 
+                                        className="transition-all duration-200 focus:ring-2 focus:ring-offset-0"
+                                        style={{
+                                            borderColor: colors.background.border,
+                                            background: colors.background.input,
+                                            color: colors.text.primary,
+                                            '--tw-ring-color': colors.primary.main,
+                                        }}
+                                    >
                                         <SelectValue placeholder="All Status" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -197,7 +265,15 @@ export default function BlogIndex({ blogs, stats, filters }: Props) {
                                 </Select>
 
                                 <Select value={sortBy} onValueChange={setSortBy}>
-                                    <SelectTrigger className="border-neutral-200 bg-white/70 backdrop-blur-sm">
+                                    <SelectTrigger 
+                                        className="transition-all duration-200 focus:ring-2 focus:ring-offset-0"
+                                        style={{
+                                            borderColor: colors.background.border,
+                                            background: colors.background.input,
+                                            color: colors.text.primary,
+                                            '--tw-ring-color': colors.primary.main,
+                                        }}
+                                    >
                                         <SelectValue placeholder="Sort by" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -205,13 +281,37 @@ export default function BlogIndex({ blogs, stats, filters }: Props) {
                                         <SelectItem value="title">Title</SelectItem>
                                         <SelectItem value="author">Author</SelectItem>
                                         <SelectItem value="published_at">Published Date</SelectItem>
+                                        <SelectItem value="views_count">Views</SelectItem>
+                                        <SelectItem value="reading_time">Reading Time</SelectItem>
+                                    </SelectContent>
+                                </Select>
+
+                                <Select value={sortOrder} onValueChange={setSortOrder}>
+                                    <SelectTrigger 
+                                        className="transition-all duration-200 focus:ring-2 focus:ring-offset-0"
+                                        style={{
+                                            borderColor: colors.background.border,
+                                            background: colors.background.input,
+                                            color: colors.text.primary,
+                                            '--tw-ring-color': colors.primary.main,
+                                        }}
+                                    >
+                                        <SelectValue placeholder="Sort Order" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="desc">Descending</SelectItem>
+                                        <SelectItem value="asc">Ascending</SelectItem>
                                     </SelectContent>
                                 </Select>
 
                                 <div className="flex gap-2">
                                     <Button
                                         onClick={handleFilter}
-                                        className="from-secondary-600 to-secondary-light hover:from-secondary-dark hover:to-secondary-600 border-0 bg-gradient-to-r"
+                                        className="shadow-lg transition-all duration-300 hover:scale-105"
+                                        style={{
+                                            background: `linear-gradient(135deg, ${colors.secondary.main} 0%, ${colors.accent.main} 100%)`,
+                                            boxShadow: `0 10px 25px -5px ${colors.secondary.main}25`,
+                                        }}
                                     >
                                         <Filter className="mr-2 h-4 w-4" />
                                         Apply Filters
@@ -225,7 +325,12 @@ export default function BlogIndex({ blogs, stats, filters }: Props) {
                                             setSortOrder('desc');
                                             router.get('/blogs');
                                         }}
-                                        className="hover:border-primary-600 hover:text-primary-600 border-neutral-200 text-neutral-600"
+                                        className="transition-all duration-300 hover:scale-105"
+                                        style={{
+                                            borderColor: colors.background.border,
+                                            color: colors.text.secondary,
+                                            background: colors.background.tertiary,
+                                        }}
                                     >
                                         Clear
                                     </Button>
@@ -235,78 +340,151 @@ export default function BlogIndex({ blogs, stats, filters }: Props) {
                     </Card>
 
                     {/* Blogs Table */}
-                    <Card className="border-0 bg-white/70 shadow-lg backdrop-blur-sm">
+                    <Card
+                        style={{
+                            background: `${colors.background.card}90`,
+                            borderColor: colors.background.border,
+                            boxShadow: `0 25px 50px -12px ${colors.primary.main}25`,
+                        }}
+                    >
                         <CardHeader>
-                            <CardTitle className="text-neutral-900">Blog Posts</CardTitle>
+                            <CardTitle style={{ color: colors.text.primary }}>Blog Posts</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="overflow-x-auto">
                                 <table className="w-full">
                                     <thead>
-                                        <tr className="border-b border-neutral-200">
-                                            <th className="p-4 text-left font-medium text-neutral-600">Blog Post</th>
-                                            <th className="p-4 text-left font-medium text-neutral-600">Author</th>
-                                            <th className="p-4 text-left font-medium text-neutral-600">Status</th>
-                                            <th className="p-4 text-left font-medium text-neutral-600">Tags</th>
-                                            <th className="p-4 text-left font-medium text-neutral-600">Created</th>
-                                            <th className="p-4 text-left font-medium text-neutral-600">Actions</th>
+                                        <tr style={{ borderColor: colors.background.divider }}>
+                                            <th className="p-4 text-left font-medium" style={{ color: colors.text.secondary }}>
+                                                Blog Post
+                                            </th>
+                                            <th className="p-4 text-left font-medium" style={{ color: colors.text.secondary }}>
+                                                Category
+                                            </th>
+                                            <th className="p-4 text-left font-medium" style={{ color: colors.text.secondary }}>
+                                                Author
+                                            </th>
+                                            <th className="p-4 text-left font-medium" style={{ color: colors.text.secondary }}>
+                                                Status
+                                            </th>
+                                            <th className="p-4 text-left font-medium" style={{ color: colors.text.secondary }}>
+                                                Analytics
+                                            </th>
+                                            <th className="p-4 text-left font-medium" style={{ color: colors.text.secondary }}>
+                                                Actions
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {blogs.data.map((blog) => (
-                                            <tr key={blog.id} className="hover:bg-background-100 border-b border-neutral-100 transition-colors">
+                                        {blogs.data.map((blog, index) => (
+                                            <tr 
+                                                key={blog.id} 
+                                                className="transition-all duration-300 hover:scale-[1.01]"
+                                                style={{ 
+                                                    borderColor: colors.background.divider,
+                                                    animationDelay: `${index * 100}ms`,
+                                                }}
+                                            >
                                                 <td className="p-4">
-                                                    <div className="space-y-1">
-                                                        <p className="font-medium text-neutral-900">{blog.title}</p>
-                                                        <p className="line-clamp-2 text-sm text-neutral-500">{blog.excerpt}</p>
-                                                        <p className="text-xs text-neutral-400">/{blog.slug}</p>
+                                                    <div className="flex items-start gap-3">
+                                                        {blog.featured_image && (
+                                                            <div className="flex-shrink-0">
+                                                                <img
+                                                                    src={blog.featured_image}
+                                                                    alt={blog.title}
+                                                                    className="h-16 w-24 rounded-lg object-cover"
+                                                                />
+                                                            </div>
+                                                        )}
+                                                        <div className="flex-1 space-y-2">
+                                                            <p className="font-semibold" style={{ color: colors.text.primary }}>
+                                                                {blog.title}
+                                                            </p>
+                                                            {blog.excerpt && (
+                                                                <p className="line-clamp-2 text-sm" style={{ color: colors.text.secondary }}>
+                                                                    {blog.excerpt}
+                                                                </p>
+                                                            )}
+                                                            <div className="flex items-center gap-2 text-xs" style={{ color: colors.text.muted }}>
+                                                                <span>/{blog.slug}</span>
+                                                                {blog.reading_time && (
+                                                                    <>
+                                                                        <span>•</span>
+                                                                        <span>{blog.reading_time} min read</span>
+                                                                    </>
+                                                                )}
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </td>
                                                 <td className="p-4">
-                                                    <div className="flex items-center gap-2">
-                                                        <User className="h-4 w-4 text-neutral-500" />
-                                                        <span className="text-neutral-600">{blog.author || 'Anonymous'}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="p-4">
-                                                    <Badge
-                                                        variant={blog.is_published ? 'default' : 'secondary'}
-                                                        className={blog.is_published ? 'bg-success-main text-white' : 'bg-warning-main text-white'}
-                                                    >
-                                                        {blog.is_published ? 'Published' : 'Draft'}
-                                                    </Badge>
-                                                    {blog.is_published && blog.published_at && (
-                                                        <p className="mt-1 text-xs text-neutral-500">
-                                                            {new Date(blog.published_at).toLocaleDateString()}
-                                                        </p>
+                                                    {blog.category ? (
+                                                        <div className="flex items-center gap-2">
+                                                            <div
+                                                                className="h-3 w-3 rounded-full"
+                                                                style={{ backgroundColor: blog.category.color }}
+                                                            ></div>
+                                                            <span className="text-sm font-medium" style={{ color: colors.text.primary }}>
+                                                                {blog.category.name}
+                                                            </span>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-sm" style={{ color: colors.text.muted }}>
+                                                            Uncategorized
+                                                        </span>
                                                     )}
                                                 </td>
                                                 <td className="p-4">
-                                                    <div className="flex flex-wrap gap-1">
-                                                        {blog.tags && blog.tags.length > 0 ? (
-                                                            blog.tags.slice(0, 3).map((tag, index) => (
-                                                                <Badge
-                                                                    key={index}
-                                                                    variant="outline"
-                                                                    className="border-neutral-200 text-xs text-neutral-600"
-                                                                >
-                                                                    {tag}
-                                                                </Badge>
-                                                            ))
-                                                        ) : (
-                                                            <span className="text-xs text-neutral-400">No tags</span>
-                                                        )}
-                                                        {blog.tags && blog.tags.length > 3 && (
-                                                            <Badge variant="outline" className="border-neutral-200 text-xs text-neutral-600">
-                                                                +{blog.tags.length - 3}
-                                                            </Badge>
+                                                    <div className="flex items-center gap-2">
+                                                        <div
+                                                            className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-white"
+                                                            style={{
+                                                                background: `linear-gradient(135deg, ${colors.primary.main} 0%, ${colors.secondary.main} 100%)`,
+                                                            }}
+                                                        >
+                                                            {(blog.author || 'A').charAt(0).toUpperCase()}
+                                                        </div>
+                                                        <span className="text-sm" style={{ color: colors.text.primary }}>
+                                                            {blog.author || 'Anonymous'}
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td className="p-4">
+                                                    <div className="space-y-2">
+                                                        <Badge
+                                                            variant="outline"
+                                                            className="transition-all duration-300"
+                                                            style={{
+                                                                borderColor: blog.is_published ? colors.success.main : colors.warning.main,
+                                                                color: blog.is_published ? colors.success.main : colors.warning.main,
+                                                                background: blog.is_published 
+                                                                    ? `${colors.success.main}15` 
+                                                                    : `${colors.warning.main}15`,
+                                                            }}
+                                                        >
+                                                            {blog.is_published ? 'Published' : 'Draft'}
+                                                        </Badge>
+                                                        {blog.is_published && blog.published_at && (
+                                                            <p className="text-xs" style={{ color: colors.text.tertiary }}>
+                                                                {new Date(blog.published_at).toLocaleDateString()}
+                                                            </p>
                                                         )}
                                                     </div>
                                                 </td>
                                                 <td className="p-4">
-                                                    <div className="flex items-center gap-2">
-                                                        <Calendar className="h-4 w-4 text-neutral-500" />
-                                                        <span className="text-neutral-600">{new Date(blog.created_at).toLocaleDateString()}</span>
+                                                    <div className="space-y-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <Eye className="h-3 w-3" style={{ color: colors.text.muted }} />
+                                                            <span className="text-sm" style={{ color: colors.text.primary }}>
+                                                                {blog.views_count.toLocaleString()}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <Calendar className="h-3 w-3" style={{ color: colors.text.muted }} />
+                                                            <span className="text-xs" style={{ color: colors.text.tertiary }}>
+                                                                {new Date(blog.created_at).toLocaleDateString()}
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                 </td>
                                                 <td className="p-4">
@@ -315,52 +493,63 @@ export default function BlogIndex({ blogs, stats, filters }: Props) {
                                                             <Button
                                                                 variant="outline"
                                                                 size="sm"
-                                                                className="hover:border-primary-600 hover:text-primary-600 border-neutral-200 text-neutral-600"
+                                                                className="transition-all duration-300 hover:scale-105"
+                                                                style={{
+                                                                    borderColor: colors.primary.main,
+                                                                    color: colors.primary.main,
+                                                                    background: 'transparent',
+                                                                }}
+                                                                title="View Blog"
                                                             >
-                                                                <Eye className="mr-1 h-3 w-3" />
-                                                                View
+                                                                <Eye className="h-4 w-4" />
                                                             </Button>
                                                         </Link>
                                                         <Link href={`/blogs/${blog.id}/edit`}>
                                                             <Button
                                                                 variant="outline"
                                                                 size="sm"
-                                                                className="hover:border-secondary-600 hover:text-secondary-600 border-neutral-200 text-neutral-600"
+                                                                className="transition-all duration-300 hover:scale-105"
+                                                                style={{
+                                                                    borderColor: colors.secondary.main,
+                                                                    color: colors.secondary.main,
+                                                                    background: 'transparent',
+                                                                }}
+                                                                title="Edit Blog"
                                                             >
-                                                                <Edit className="mr-1 h-3 w-3" />
-                                                                Edit
+                                                                <Edit className="h-4 w-4" />
                                                             </Button>
                                                         </Link>
                                                         <Button
                                                             variant="outline"
                                                             size="sm"
                                                             onClick={() => togglePublish(blog.id)}
-                                                            className={`border-2 transition-all duration-300 ${
-                                                                blog.is_published
-                                                                    ? 'border-orange-300 text-orange-600 hover:bg-orange-50'
-                                                                    : 'border-green-300 text-green-600 hover:bg-green-50'
-                                                            }`}
+                                                            className="transition-all duration-300 hover:scale-105"
+                                                            style={{
+                                                                borderColor: blog.is_published ? colors.warning.main : colors.success.main,
+                                                                color: blog.is_published ? colors.warning.main : colors.success.main,
+                                                                background: 'transparent',
+                                                            }}
+                                                            title={blog.is_published ? 'Unpublish' : 'Publish'}
                                                         >
                                                             {blog.is_published ? (
-                                                                <>
-                                                                    <EyeOff className="mr-1 h-3 w-3" />
-                                                                    Unpublish
-                                                                </>
+                                                                <EyeOff className="h-4 w-4" />
                                                             ) : (
-                                                                <>
-                                                                    <CheckCircle className="mr-1 h-3 w-3" />
-                                                                    Publish
-                                                                </>
+                                                                <CheckCircle className="h-4 w-4" />
                                                             )}
                                                         </Button>
                                                         <Button
                                                             variant="outline"
                                                             size="sm"
                                                             onClick={() => deleteBlog(blog.id)}
-                                                            className="border-red-300 text-red-600 hover:border-red-400 hover:bg-red-50"
+                                                            className="transition-all duration-300 hover:scale-105"
+                                                            style={{
+                                                                borderColor: colors.error.main,
+                                                                color: colors.error.main,
+                                                                background: 'transparent',
+                                                            }}
+                                                            title="Delete Blog"
                                                         >
-                                                            <Trash2 className="mr-1 h-3 w-3" />
-                                                            Delete
+                                                            <Trash2 className="h-4 w-4" />
                                                         </Button>
                                                     </div>
                                                 </td>
@@ -372,8 +561,11 @@ export default function BlogIndex({ blogs, stats, filters }: Props) {
 
                             {/* Pagination */}
                             {blogs.last_page > 1 && (
-                                <div className="mt-6 flex items-center justify-between border-t border-neutral-200 pt-6">
-                                    <p className="text-sm text-neutral-500">
+                                <div 
+                                    className="mt-6 flex items-center justify-between pt-6"
+                                    style={{ borderColor: colors.background.divider }}
+                                >
+                                    <p className="text-sm" style={{ color: colors.text.tertiary }}>
                                         Showing {(blogs.current_page - 1) * blogs.per_page + 1} to{' '}
                                         {Math.min(blogs.current_page * blogs.per_page, blogs.total)} of {blogs.total} results
                                     </p>
@@ -383,10 +575,20 @@ export default function BlogIndex({ blogs, stats, filters }: Props) {
                                                 key={page}
                                                 variant={page === blogs.current_page ? 'default' : 'outline'}
                                                 size="sm"
-                                                className={
+                                                className="transition-all duration-300 hover:scale-105"
+                                                style={
                                                     page === blogs.current_page
-                                                        ? 'bg-primary-600 border-primary-600 text-white'
-                                                        : 'hover:border-primary-600 hover:text-primary-600 border-neutral-200 text-neutral-600'
+                                                        ? {
+                                                            background: `linear-gradient(135deg, ${colors.primary.main} 0%, ${colors.secondary.main} 100%)`,
+                                                            borderColor: colors.primary.main,
+                                                            color: colors.text.inverse,
+                                                            boxShadow: `0 5px 15px -3px ${colors.primary.main}25`,
+                                                        }
+                                                        : {
+                                                            borderColor: colors.background.border,
+                                                            color: colors.text.secondary,
+                                                            background: colors.background.tertiary,
+                                                        }
                                                 }
                                             >
                                                 {page}
