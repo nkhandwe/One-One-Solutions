@@ -21,7 +21,6 @@ class ServiceController extends Controller
             $search = $request->get('search');
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('short_description', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%");
             });
         }
@@ -41,7 +40,8 @@ class ServiceController extends Controller
         $sortOrder = $request->get('sort_order', 'asc');
         $query->orderBy($sortBy, $sortOrder);
 
-        $services = $query->paginate(15)->withQueryString();
+        // For now, return all services without pagination for better compatibility
+        $services = $query->get();
 
         // Get statistics
         $stats = [
@@ -75,7 +75,6 @@ class ServiceController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'short_description' => 'nullable|string|max:500',
             'description' => 'required|string',
             'icon' => 'nullable|string|max:255',
             'image' => 'nullable|string',
@@ -123,7 +122,6 @@ class ServiceController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'short_description' => 'nullable|string|max:500',
             'description' => 'required|string',
             'icon' => 'nullable|string|max:255',
             'image' => 'nullable|string',
