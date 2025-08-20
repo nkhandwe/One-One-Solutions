@@ -1,270 +1,359 @@
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useTheme } from '@/contexts/ThemeContext';
 import AdminLayout from '@/layouts/AdminLayout';
-import { Head, Link, router } from '@inertiajs/react';
-import { ArrowLeft, Hash, Image, Save, Settings, ToggleLeft, ToggleRight } from 'lucide-react';
-import React, { useState } from 'react';
+import { Head, Link, useForm } from '@inertiajs/react';
+import { ArrowLeft, FileText, Image, Save, Settings } from 'lucide-react';
+import React from 'react';
 
-interface Props {
-    nextPosition: number;
-}
-
-export default function ServiceCreate({ nextPosition }: Props) {
-    const [formData, setFormData] = useState({
+export default function ServicesCreate() {
+    const { colors } = useTheme();
+    const { data, setData, post, processing, errors } = useForm({
         name: '',
-        short_description: '',
         description: '',
         icon: '',
         image: '',
         is_active: true,
-        position: nextPosition,
+        position: 1,
     });
-
-    const handleInputChange = (field: string, value: any) => {
-        setFormData((prev) => ({
-            ...prev,
-            [field]: value,
-        }));
-    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        router.post('/services', formData);
+        post('/services');
     };
 
     return (
         <AdminLayout>
-            <Head title="Create Service" />
+            <Head title="Create New Service" />
 
             <div className="p-6">
-                <div className="mx-auto max-w-4xl space-y-6">
+                <div className="mx-auto max-w-7xl space-y-6">
                     {/* Header */}
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <Link
-                                href="/services"
-                                className="rounded-lg border border-white/20 bg-white/70 p-2 backdrop-blur-sm transition-all duration-300 hover:bg-white/90"
-                            >
-                                <ArrowLeft className="h-5 w-5 text-neutral-900" />
-                            </Link>
-                            <div>
-                                <h1 className="text-3xl font-bold text-neutral-900">Create Service</h1>
-                                <p className="text-neutral-600">Create a new service for your business</p>
-                            </div>
+                    <div className="flex items-center gap-4">
+                        <Link
+                            href="/services"
+                            className="group flex items-center justify-center rounded-full border p-3 transition-all duration-300 hover:scale-105"
+                            style={{
+                                background: `${colors.background.card}60`,
+                                borderColor: colors.background.border,
+                            }}
+                        >
+                            <ArrowLeft className="h-5 w-5 transition-colors" style={{ color: colors.text.secondary }} />
+                        </Link>
+                        <div className="flex-1">
+                            <h1 className="text-3xl font-bold" style={{ color: colors.text.primary }}>
+                                Create New Service
+                            </h1>
+                            <p style={{ color: colors.text.tertiary }}>Add a new service to your portfolio</p>
                         </div>
                         <div className="flex items-center gap-3">
                             <Button
                                 type="submit"
-                                form="service-form"
-                                className="from-primary-600 to-primary-light hover:from-primary-dark hover:to-primary-600 border-0 bg-gradient-to-r"
+                                form="service-create-form"
+                                className="shadow-lg transition-all duration-300 hover:scale-105"
+                                style={{
+                                    background: `linear-gradient(135deg, ${colors.primary.main} 0%, ${colors.secondary.main} 100%)`,
+                                    boxShadow: `0 10px 25px -5px ${colors.primary.main}25`,
+                                }}
+                                disabled={processing}
                             >
                                 <Save className="mr-2 h-4 w-4" />
-                                Save Service
+                                {processing ? 'Creating...' : 'Create Service'}
                             </Button>
                         </div>
                     </div>
 
-                    <form id="service-form" onSubmit={handleSubmit} className="space-y-6">
+                    <form id="service-create-form" onSubmit={handleSubmit} className="space-y-6">
                         {/* Main Content */}
-                        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                        <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
                             {/* Left Column - Main Form */}
-                            <div className="space-y-6 lg:col-span-2">
-                                {/* Service Details */}
-                                <Card className="border-0 bg-white/70 shadow-lg backdrop-blur-sm">
+                            <div className="space-y-6 xl:col-span-3">
+                                {/* Basic Information */}
+                                <Card
+                                    style={{
+                                        background: `${colors.background.card}90`,
+                                        borderColor: colors.background.border,
+                                        boxShadow: `0 25px 50px -12px ${colors.primary.main}25`,
+                                    }}
+                                >
                                     <CardHeader>
-                                        <CardTitle className="flex items-center gap-2 text-neutral-900">
-                                            <Settings className="text-primary-600 h-5 w-5" />
+                                        <CardTitle className="flex items-center gap-2" style={{ color: colors.text.primary }}>
+                                            <FileText className="h-5 w-5" style={{ color: colors.primary.main }} />
                                             Service Details
                                         </CardTitle>
                                     </CardHeader>
-                                    <CardContent className="space-y-4">
+                                    <CardContent className="space-y-6">
                                         <div className="space-y-2">
-                                            <Label htmlFor="name" className="text-neutral-700">
+                                            <Label htmlFor="name" style={{ color: colors.text.primary }}>
                                                 Service Name *
                                             </Label>
                                             <Input
                                                 id="name"
-                                                value={formData.name}
-                                                onChange={(e) => handleInputChange('name', e.target.value)}
+                                                value={data.name}
+                                                onChange={(e) => setData('name', e.target.value)}
                                                 placeholder="Enter service name..."
-                                                className="focus:border-primary-600 border-neutral-200 bg-white/70 backdrop-blur-sm"
+                                                className="transition-all duration-200 focus:ring-2 focus:ring-offset-0"
+                                                style={{
+                                                    borderColor: colors.background.border,
+                                                    background: colors.background.input,
+                                                    color: colors.text.primary,
+                                                    '--tw-ring-color': colors.primary.main,
+                                                }}
                                                 required
                                             />
+                                            {errors.name && (
+                                                <p className="text-sm" style={{ color: colors.error.main }}>
+                                                    {errors.name}
+                                                </p>
+                                            )}
                                         </div>
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="short_description" className="text-neutral-700">
-                                                Short Description
-                                            </Label>
-                                            <Textarea
-                                                id="short_description"
-                                                value={formData.short_description}
-                                                onChange={(e) => handleInputChange('short_description', e.target.value)}
-                                                placeholder="Brief summary of the service..."
-                                                className="focus:border-primary-600 min-h-[100px] border-neutral-200 bg-white/70 backdrop-blur-sm"
-                                                maxLength={500}
-                                            />
-                                            <p className="text-xs text-neutral-500">{formData.short_description.length}/500 characters</p>
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <Label htmlFor="description" className="text-neutral-700">
-                                                Detailed Description *
+                                            <Label htmlFor="description" style={{ color: colors.text.primary }}>
+                                                Description
                                             </Label>
                                             <Textarea
                                                 id="description"
-                                                value={formData.description}
-                                                onChange={(e) => handleInputChange('description', e.target.value)}
-                                                placeholder="Detailed description of the service..."
-                                                className="focus:border-primary-600 min-h-[300px] border-neutral-200 bg-white/70 backdrop-blur-sm"
-                                                required
+                                                value={data.description}
+                                                onChange={(e) => setData('description', e.target.value)}
+                                                placeholder="Describe your service..."
+                                                className="min-h-[120px] transition-all duration-200 focus:ring-2 focus:ring-offset-0"
+                                                style={{
+                                                    borderColor: colors.background.border,
+                                                    background: colors.background.input,
+                                                    color: colors.text.primary,
+                                                    '--tw-ring-color': colors.primary.main,
+                                                }}
+                                                maxLength={500}
                                             />
+                                            <p className="text-xs" style={{ color: colors.text.tertiary }}>
+                                                {data.description.length}/500 characters
+                                            </p>
+                                            {errors.description && (
+                                                <p className="text-sm" style={{ color: colors.error.main }}>
+                                                    {errors.description}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+
+                                {/* Media and Icons */}
+                                <Card
+                                    style={{
+                                        background: `${colors.background.card}90`,
+                                        borderColor: colors.background.border,
+                                        boxShadow: `0 25px 50px -12px ${colors.primary.main}25`,
+                                    }}
+                                >
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center gap-2" style={{ color: colors.text.primary }}>
+                                            <Image className="h-5 w-5" style={{ color: colors.secondary.main }} />
+                                            Media & Icons
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="space-y-6">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="icon" style={{ color: colors.text.primary }}>
+                                                Icon (Emoji or Symbol)
+                                            </Label>
+                                            <Input
+                                                id="icon"
+                                                value={data.icon}
+                                                onChange={(e) => setData('icon', e.target.value)}
+                                                placeholder="🚀 or ✨ or any symbol..."
+                                                className="text-2xl transition-all duration-200 focus:ring-2 focus:ring-offset-0"
+                                                style={{
+                                                    borderColor: colors.background.border,
+                                                    background: colors.background.input,
+                                                    color: colors.text.primary,
+                                                    '--tw-ring-color': colors.primary.main,
+                                                }}
+                                                maxLength={10}
+                                            />
+                                            <p className="text-xs" style={{ color: colors.text.tertiary }}>
+                                                Use emojis, symbols, or single characters as icons
+                                            </p>
+                                            {errors.icon && (
+                                                <p className="text-sm" style={{ color: colors.error.main }}>
+                                                    {errors.icon}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label htmlFor="image" style={{ color: colors.text.primary }}>
+                                                Image URL
+                                            </Label>
+                                            <Input
+                                                id="image"
+                                                value={data.image}
+                                                onChange={(e) => setData('image', e.target.value)}
+                                                placeholder="https://example.com/image.jpg"
+                                                className="transition-all duration-200 focus:ring-2 focus:ring-offset-0"
+                                                style={{
+                                                    borderColor: colors.background.border,
+                                                    background: colors.background.input,
+                                                    color: colors.text.primary,
+                                                    '--tw-ring-color': colors.primary.main,
+                                                }}
+                                            />
+                                            <p className="text-xs" style={{ color: colors.text.tertiary }}>
+                                                Optional: URL to a service image
+                                            </p>
+                                            {errors.image && (
+                                                <p className="text-sm" style={{ color: colors.error.main }}>
+                                                    {errors.image}
+                                                </p>
+                                            )}
                                         </div>
                                     </CardContent>
                                 </Card>
                             </div>
 
                             {/* Right Column - Sidebar */}
-                            <div className="space-y-6">
-                                {/* Status Settings */}
-                                <Card className="border-0 bg-white/70 shadow-lg backdrop-blur-sm">
+                            <div className="space-y-6 xl:col-span-1">
+                                {/* Settings */}
+                                <Card
+                                    style={{
+                                        background: `${colors.background.card}90`,
+                                        borderColor: colors.background.border,
+                                        boxShadow: `0 25px 50px -12px ${colors.primary.main}25`,
+                                    }}
+                                >
                                     <CardHeader>
-                                        <CardTitle className="flex items-center gap-2 text-neutral-900">
-                                            {formData.is_active ? (
-                                                <ToggleRight className="h-5 w-5 text-green-600" />
-                                            ) : (
-                                                <ToggleLeft className="h-5 w-5 text-orange-600" />
-                                            )}
-                                            Status Settings
+                                        <CardTitle className="flex items-center gap-2" style={{ color: colors.text.primary }}>
+                                            <Settings className="h-5 w-5" style={{ color: colors.accent.main }} />
+                                            Settings
                                         </CardTitle>
                                     </CardHeader>
-                                    <CardContent className="space-y-4">
-                                        <div className="flex items-center space-x-2">
-                                            <Checkbox
-                                                id="is_active"
-                                                checked={formData.is_active}
-                                                onCheckedChange={(checked) => handleInputChange('is_active', checked)}
-                                            />
-                                            <Label htmlFor="is_active" className="text-neutral-700">
-                                                Active service
+                                    <CardContent className="space-y-6">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="position" style={{ color: colors.text.primary }}>
+                                                Display Position
                                             </Label>
+                                            <Input
+                                                id="position"
+                                                type="number"
+                                                value={data.position}
+                                                onChange={(e) => setData('position', parseInt(e.target.value) || 1)}
+                                                min="1"
+                                                className="transition-all duration-200 focus:ring-2 focus:ring-offset-0"
+                                                style={{
+                                                    borderColor: colors.background.border,
+                                                    background: colors.background.input,
+                                                    color: colors.text.primary,
+                                                    '--tw-ring-color': colors.primary.main,
+                                                }}
+                                            />
+                                            <p className="text-xs" style={{ color: colors.text.tertiary }}>
+                                                Lower numbers appear first
+                                            </p>
+                                            {errors.position && (
+                                                <p className="text-sm" style={{ color: colors.error.main }}>
+                                                    {errors.position}
+                                                </p>
+                                            )}
                                         </div>
-                                        {formData.is_active ? (
-                                            <p className="text-sm text-green-600">This service will be visible on your website.</p>
+
+                                        <div className="space-y-4">
+                                            <div className="flex items-center space-x-2">
+                                                <Checkbox
+                                                    id="is_active"
+                                                    checked={data.is_active}
+                                                    onCheckedChange={(checked) => setData('is_active', checked as boolean)}
+                                                />
+                                                <Label htmlFor="is_active" style={{ color: colors.text.primary }}>
+                                                    Active Service
+                                                </Label>
+                                            </div>
+                                            <p className="text-xs" style={{ color: colors.text.tertiary }}>
+                                                Active services are visible to visitors
+                                            </p>
+                                            {errors.is_active && (
+                                                <p className="text-sm" style={{ color: colors.error.main }}>
+                                                    {errors.is_active}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+
+                                {/* Preview */}
+                                <Card
+                                    style={{
+                                        background: `${colors.background.card}90`,
+                                        borderColor: colors.background.border,
+                                        boxShadow: `0 25px 50px -12px ${colors.primary.main}25`,
+                                    }}
+                                >
+                                    <CardHeader>
+                                        <CardTitle style={{ color: colors.text.primary }}>Preview</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        {data.name ? (
+                                            <div className="space-y-4">
+                                                <div className="flex items-center gap-3">
+                                                    {data.image ? (
+                                                        <img src={data.image} alt={data.name} className="h-16 w-16 rounded-lg object-cover" />
+                                                    ) : (
+                                                        <div
+                                                            className="flex h-16 w-16 items-center justify-center rounded-lg text-3xl"
+                                                            style={{
+                                                                background: `linear-gradient(135deg, ${colors.primary.main} 0%, ${colors.secondary.main} 100%)`,
+                                                            }}
+                                                        >
+                                                            {data.icon || data.name.charAt(0)}
+                                                        </div>
+                                                    )}
+                                                    <div>
+                                                        <h3 className="font-semibold" style={{ color: colors.text.primary }}>
+                                                            {data.name}
+                                                        </h3>
+                                                        <p className="text-sm" style={{ color: colors.text.tertiary }}>
+                                                            Position: {data.position}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                {data.description && (
+                                                    <p className="text-sm" style={{ color: colors.text.secondary }}>
+                                                        {data.description}
+                                                    </p>
+                                                )}
+
+                                                <div className="border-t pt-4" style={{ borderColor: colors.background.divider }}>
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-sm" style={{ color: colors.text.tertiary }}>
+                                                            Status:
+                                                        </span>
+                                                        <Badge
+                                                            variant="outline"
+                                                            style={{
+                                                                borderColor: data.is_active ? colors.success.main : colors.warning.main,
+                                                                color: data.is_active ? colors.success.main : colors.warning.main,
+                                                                background: data.is_active ? `${colors.success.main}15` : `${colors.warning.main}15`,
+                                                            }}
+                                                        >
+                                                            {data.is_active ? 'Active' : 'Inactive'}
+                                                        </Badge>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         ) : (
-                                            <p className="text-sm text-orange-600">This service will be hidden from your website.</p>
+                                            <p className="py-8 text-center" style={{ color: colors.text.tertiary }}>
+                                                Start typing to see a preview of your service...
+                                            </p>
                                         )}
-                                    </CardContent>
-                                </Card>
-
-                                {/* Position */}
-                                <Card className="border-0 bg-white/70 shadow-lg backdrop-blur-sm">
-                                    <CardHeader>
-                                        <CardTitle className="flex items-center gap-2 text-neutral-900">
-                                            <Hash className="text-secondary-600 h-5 w-5" />
-                                            Display Position
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <Input
-                                            type="number"
-                                            min="1"
-                                            value={formData.position}
-                                            onChange={(e) => handleInputChange('position', parseInt(e.target.value) || 1)}
-                                            className="focus:border-secondary-600 border-neutral-200 bg-white/70 backdrop-blur-sm"
-                                        />
-                                        <p className="mt-1 text-xs text-neutral-500">Controls the order in which this service appears</p>
-                                    </CardContent>
-                                </Card>
-
-                                {/* Icon */}
-                                <Card className="border-0 bg-white/70 shadow-lg backdrop-blur-sm">
-                                    <CardHeader>
-                                        <CardTitle className="flex items-center gap-2 text-neutral-900">
-                                            <Settings className="text-accent-600 h-5 w-5" />
-                                            Icon
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <Input
-                                            value={formData.icon}
-                                            onChange={(e) => handleInputChange('icon', e.target.value)}
-                                            placeholder="Icon class or emoji..."
-                                            className="focus:border-accent-600 border-neutral-200 bg-white/70 backdrop-blur-sm"
-                                        />
-                                        <p className="mt-1 text-xs text-neutral-500">Icon class (e.g., fa-home) or emoji</p>
-                                    </CardContent>
-                                </Card>
-
-                                {/* Image */}
-                                <Card className="border-0 bg-white/70 shadow-lg backdrop-blur-sm">
-                                    <CardHeader>
-                                        <CardTitle className="flex items-center gap-2 text-neutral-900">
-                                            <Image className="h-5 w-5 text-purple-600" />
-                                            Service Image
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <Input
-                                            value={formData.image}
-                                            onChange={(e) => handleInputChange('image', e.target.value)}
-                                            placeholder="Image URL or path..."
-                                            className="border-neutral-200 bg-white/70 backdrop-blur-sm focus:border-purple-600"
-                                        />
-                                        <p className="mt-1 text-xs text-neutral-500">Featured image for this service</p>
                                     </CardContent>
                                 </Card>
                             </div>
                         </div>
-
-                        {/* Preview Card */}
-                        <Card className="border-0 bg-white/70 shadow-lg backdrop-blur-sm">
-                            <CardHeader>
-                                <CardTitle className="text-neutral-900">Preview</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                {formData.name ? (
-                                    <div className="space-y-4">
-                                        <div className="flex items-center gap-3">
-                                            {formData.icon && (
-                                                <div className="bg-primary-50 flex h-12 w-12 items-center justify-center rounded-lg">
-                                                    <span className="text-lg">{formData.icon}</span>
-                                                </div>
-                                            )}
-                                            <div>
-                                                <h2 className="text-2xl font-bold text-neutral-900">{formData.name}</h2>
-                                                <div className="flex items-center gap-2 text-sm text-neutral-500">
-                                                    <Hash className="h-3 w-3" />
-                                                    <span>Position {formData.position}</span>
-                                                    <span className="mx-2">•</span>
-                                                    <span className={formData.is_active ? 'text-green-600' : 'text-orange-600'}>
-                                                        {formData.is_active ? 'Active' : 'Inactive'}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        {formData.short_description && <p className="text-neutral-600 italic">"{formData.short_description}"</p>}
-                                        {formData.description && (
-                                            <div className="rounded-lg bg-neutral-50 p-4">
-                                                <p className="text-sm text-neutral-600">{formData.description.substring(0, 200)}...</p>
-                                            </div>
-                                        )}
-                                        {formData.image && (
-                                            <div className="text-sm text-neutral-500">
-                                                <Image className="mr-1 inline h-4 w-4" />
-                                                Image: {formData.image}
-                                            </div>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <p className="py-8 text-center text-neutral-500">Start typing to see a preview of your service...</p>
-                                )}
-                            </CardContent>
-                        </Card>
                     </form>
                 </div>
             </div>
