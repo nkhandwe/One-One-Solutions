@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Blog extends Model
@@ -15,8 +16,10 @@ class Blog extends Model
         'slug',
         'excerpt',
         'content',
+        'featured_image',
         'image',
         'author',
+        'category_id',
         'tags',
         'is_published',
         'published_at',

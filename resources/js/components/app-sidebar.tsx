@@ -16,6 +16,23 @@ import {
     SwatchBook,
     TableOfContents,
     Telescope,
+    Users,
+    BarChart3,
+    FileText,
+    MessageSquare,
+    Calendar,
+    DollarSign,
+    Target,
+    TrendingUp,
+    Package,
+    Globe,
+    Palette,
+    Search,
+    Mail,
+    Phone,
+    MapPin,
+    Building2,
+    GraduationCap
 } from 'lucide-react';
 import AppLogo from './app-logo';
 import { NavAdditional } from './nav-additional';
@@ -29,80 +46,214 @@ const mainNavItems: NavItem[] = [
 ];
 
 const additionalNavItems: NavItem[] = [
-    // App Management
+    // Dashboard & Analytics
+    {
+        title: 'Analytics',
+        href: '/analytics',
+        icon: BarChart3,
+        group: 'Dashboard & Analytics',
+    },
+    {
+        title: 'Reports',
+        href: '/reports',
+        icon: FileText,
+        group: 'Dashboard & Analytics',
+    },
+
+    // Client Management
     {
         title: 'Clients',
         href: '/clients',
-        icon: LayoutList,
-        group: 'App Management',
+        icon: Users,
+        group: 'Client Management',
     },
     {
-        title: 'Teams',
-        href: '/teams',
-        icon: ShieldHalf,
-        group: 'App Management',
+        title: 'Client Accounts',
+        href: '/client-accounts',
+        icon: Building2,
+        group: 'Client Management',
+    },
+    {
+        title: 'Client Performance',
+        href: '/client-performance',
+        icon: TrendingUp,
+        group: 'Client Management',
     },
 
-    // Content Management
+    // Team Management
     {
-        title: 'Banners',
+        title: 'Team Members',
+        href: '/teams',
+        icon: ShieldHalf,
+        group: 'Team Management',
+    },
+    {
+        title: 'Team Performance',
+        href: '/team-performance',
+        icon: Target,
+        group: 'Team Management',
+    },
+    {
+        title: 'Training & Skills',
+        href: '/training',
+        icon: GraduationCap,
+        group: 'Team Management',
+    },
+
+    // Amazon Services Management
+    {
+        title: 'Amazon Accounts',
+        href: '/amazon-accounts',
+        icon: ShoppingBasket,
+        group: 'Amazon Services',
+    },
+    {
+        title: 'Product Catalog',
+        href: '/products',
+        icon: Package,
+        group: 'Amazon Services',
+    },
+    {
+        title: 'Listing Management',
+        href: '/listings',
+        icon: TableOfContents,
+        group: 'Amazon Services',
+    },
+    {
+        title: 'Advertising Campaigns',
+        href: '/advertising',
+        icon: Target,
+        group: 'Amazon Services',
+    },
+    {
+        title: 'Inventory Management',
+        href: '/inventory',
+        icon: Package,
+        group: 'Amazon Services',
+    },
+
+    // Content & Media
+    {
+        title: 'Banners & Sliders',
         href: '/banners',
         icon: Image,
-        group: 'Content Management',
+        group: 'Content & Media',
+    },
+    {
+        title: 'Product Images',
+        href: '/product-images',
+        icon: Image,
+        group: 'Content & Media',
+    },
+    {
+        title: 'Portfolio',
+        href: '/portfolios',
+        icon: BriefcaseBusiness,
+        group: 'Content & Media',
     },
     {
         title: 'Testimonials',
         href: '/testimonials',
         icon: SwatchBook,
-        group: 'Content Management',
-    },
-    {
-        title: 'Portfolio',
-        href: '/portfolio',
-        icon: BriefcaseBusiness,
-        group: 'Content Management',
+        group: 'Content & Media',
     },
 
-    // Product & Services
+    // Marketing & SEO
     {
-        title: 'Products',
-        href: '/products',
-        icon: ShoppingBasket,
-        group: 'Product & Services',
+        title: 'SEO Management',
+        href: '/seo',
+        icon: Search,
+        group: 'Marketing & SEO',
     },
+    {
+        title: 'Digital Marketing',
+        href: '/digital-marketing',
+        icon: Globe,
+        group: 'Marketing & SEO',
+    },
+    {
+        title: 'Social Media',
+        href: '/social-media',
+        icon: Rss,
+        group: 'Marketing & SEO',
+    },
+
+    // Communication
+    {
+        title: 'Inquiries',
+        href: '/inquiry',
+        icon: Siren,
+        group: 'Communication',
+    },
+    {
+        title: 'Customer Messages',
+        href: '/customer-messages',
+        icon: MessageSquare,
+        group: 'Communication',
+    },
+    {
+        title: 'Email Campaigns',
+        href: '/email-campaigns',
+        icon: Mail,
+        group: 'Communication',
+    },
+
+    // Business Operations
     {
         title: 'Services',
         href: '/services',
         icon: Telescope,
-        group: 'Product & Services',
+        group: 'Business Operations',
     },
-
-    // Blogging & FAQs
+    {
+        title: 'Pricing Plans',
+        href: '/pricing',
+        icon: DollarSign,
+        group: 'Business Operations',
+    },
+    {
+        title: 'Appointments',
+        href: '/appointments',
+        icon: Calendar,
+        group: 'Business Operations',
+    },
     {
         title: 'FAQs',
         href: '/faqs',
         icon: TableOfContents,
-        group: 'Blogging & FAQs',
+        group: 'Business Operations',
     },
     {
         title: 'Blogs',
         href: '/blogs',
         icon: Rss,
-        group: 'Blogging & FAQs',
-    },
-    {
-        title: 'Inquiry',
-        href: '/inquiry',
-        icon: Siren,
-        group: 'Inquiries',
+        group: 'Business Operations',
     },
 
-    // Web Settings
+    // System & Settings
     {
-        title: 'Settings',
+        title: 'Website Settings',
         href: '/settings',
         icon: Settings,
-        group: 'Web Settings',
+        group: 'System & Settings',
+    },
+    {
+        title: 'User Management',
+        href: '/users',
+        icon: Users,
+        group: 'System & Settings',
+    },
+    {
+        title: 'Contact Information',
+        href: '/contact-info',
+        icon: Phone,
+        group: 'System & Settings',
+    },
+    {
+        title: 'Company Profile',
+        href: '/company-profile',
+        icon: Building2,
+        group: 'System & Settings',
     },
 ];
 
